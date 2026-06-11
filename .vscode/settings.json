@@ -1,0 +1,6 @@
+{
+    "python.defaultInterpreterPath": "/home/luis/Projects/PokemonDifussion/venv/bin/python",
+    "python.analysis.extraPaths": [
+        "/home/luis/Projects/PokemonDifussion/venv/lib/python3.13/site-packages"
+    ]
+}
