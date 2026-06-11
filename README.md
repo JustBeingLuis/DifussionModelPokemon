@@ -10,8 +10,6 @@ The implementation focuses on architectural transparency, providing a clean, vec
 
 ![Generated Pokémon Samples](output/pokemones_generados.png)
 
-*(Note: Ensure your generated image is placed at `output/pokemones_generados.png` or update this path accordingly).*
-
 ## Architecture Details
 
 The core of the generative process relies on a custom-built U-Net architecture integrated with a Markovian diffusion process.
