@@ -1,5 +1,4 @@
 /data
-/output
 *.pth
 __pycache__/
 venv/
