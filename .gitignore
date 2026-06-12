@@ -2,3 +2,6 @@
 *.pth
 __pycache__/
 venv/
+runs/
+checkpoints/
+

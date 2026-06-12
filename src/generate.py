@@ -3,27 +3,37 @@ import torch
 import torchvision
 from unet import UNet
 from diffusion import DiffusionProcess
+import argparse
+import math
 
-torch.manual_seed(42)
+torch.manual_seed(12)
 
-def generate(n_samples):
+def generate(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Generando con {device}")
 
     unet = UNet(in_channels=3,out_channels=3).to(device)
-    unet.load_state_dict(torch.load("pokemon_unet.pth", weights_only=True))
+    unet.load_state_dict(torch.load("pokemon_unet_Xpred_Vloss_LrSchedule.pth", weights_only=True))
 
-    difussion = DiffusionProcess(timesteps=100, device=device)
+    difussion = DiffusionProcess(timesteps=args.steps, device=device)
 
-    n_samples = n_samples
-    print(f"Generando {n_samples} pokemones desde ruido puro...")
-    samples = difussion.sample(unet, n_samples)
+    
+    print(f"Generando {args.samples} pokemones desde ruido puro...")
+    samples = difussion.sample(unet, args.samples)
 
     os.makedirs("output", exist_ok=True)
 
-    file_name = "output/pokemones_generados_02.png"
-    torchvision.utils.save_image(samples, file_name, nrow=4)
-    print(f"Generacion terminada, guardado en {file_name}")
+    grid_rows = math.ceil(math.sqrt(args.samples))
+    torchvision.utils.save_image(samples, args.output, nrow=grid_rows)
+    print(f"Generacion terminada, guardado en {args.output}")
 
 if __name__ == "__main__":
-    generate(16)
+    parser = argparse.ArgumentParser(description="Script para generar Pokemones")
+
+    parser.add_argument("--samples", type=int, default=16, help="Cantidad de imagenes a generar")
+    parser.add_argument("--steps", type=int, default=50, help="Pasos para resolver la ODE")
+    parser.add_argument("--output", type=str, default="output/generados.png", help="Nombre del archivo final")
+
+    args = parser.parse_args()
+
+    generate(args)

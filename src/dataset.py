@@ -25,9 +25,9 @@ class PokemonDataset(Dataset):
 
         return self.transform(img)
 
-def get_dataloader():
+def get_dataloader(batch_size = BATCH_SIZE):
     dataset = PokemonDataset()
-    return DataLoader(dataset=dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
+    return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
 if __name__ == "__main__":
     loader = get_dataloader()

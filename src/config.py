@@ -6,7 +6,7 @@ DATA_PROCESSED_DIR = os.path.join(BASE_DIR, "data", "processed")
 
 IMAGE_SIZE = 64        
 BATCH_SIZE = 128   
-EPOCHS = 100           
+EPOCHS = 2000          
 LEARNING_RATE = 1e-4   
 
 TIMESTEPS = 1000       
