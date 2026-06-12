@@ -2,60 +2,57 @@ import torch
 from tqdm import tqdm
 
 class DiffusionProcess:
-    def __init__(self, timesteps=1000, beta_start=1e-4, beta_end=0.02, device="cpu"):
+    def __init__(self, timesteps=100, device="cpu"):
         self.timesteps=timesteps
         self.device=device
-
-        # Cantidad de ruido a agregar en cada paso
-        self.betas = torch.linspace(beta_start,beta_end,timesteps).to(device)
-
-        # Cantidad de informacion que se conserva de la imagen original
-        self.alphas = 1.0 - self.betas
-
-        # Cantidad de foto que sobrevive en cada uno de los pasos
-        self.alpha_cumprod = torch.cumprod(self.alphas, dim=0)
-
-        # Usamos la raiz cuadrada para evitar el problema de los cuadrados al mezclar variables
-        # Raiz de lo que sobrevive de la foto en cada paso
-        self.sqrt_alpha_cumprod = torch.sqrt(self.alpha_cumprod)
-
-        # Raiz de todo el ruido acumulado desde el paso 0 hasta t
-        self.sqrt_one_minus_alpha_cumprod = torch.sqrt(1.0 - self.alpha_cumprod)
     
     def add_noise(self,x_0,t):
         noise = torch.randn_like(x_0).to(self.device)
 
-        sqrt_alpha_bar = self.sqrt_alpha_cumprod[t].view(-1,1,1,1)
-        sqrt_one_minus_alpha_cumprod = self.sqrt_one_minus_alpha_cumprod[t].view(-1,1,1,1)
+        t = t.view(-1,1,1,1)
+        z_t = t * x_0 + (1.0 - t) * noise
+        v = x_0 - noise
 
-        x_t = sqrt_alpha_bar * x_0 + sqrt_one_minus_alpha_cumprod * noise  
-
-        return x_t, noise 
+        return z_t, v 
 
     @torch.no_grad()
     def sample(self, unet, n_samples=1, img_size = 64, channels = 3 ):
 
         unet.eval()
         
-        x = torch.randn((n_samples, channels,img_size,img_size)).to(self.device)
+        z = torch.randn((n_samples, channels,img_size,img_size)).to(self.device)
 
-        for i in tqdm(reversed(range(0, self.timesteps)), desc = "Generando..."):
-            t = torch.full((n_samples,),i,device=self.device, dtype=torch.long)    
-            pred_noise = unet(x,t)    
+        dt = 1.0 / self.timesteps
 
-            alpha_t = self.alphas[t].view(-1,1,1,1)
-            sqrt_one_minus_alpha_cumprod_t = self.sqrt_one_minus_alpha_cumprod[t].view(-1,1,1,1)
 
-            x = (1.0 / torch.sqrt(alpha_t)) * (x - ((1- alpha_t) / sqrt_one_minus_alpha_cumprod_t)* pred_noise)
+        for step in tqdm(range(self.timesteps), desc="Generando..."):
+            t_current = step * dt
+            t_next = (step + 1) * dt
 
-            # Le agragamos ruido leve en cada iteracion para que la imagen no sea suave o sin textura
-            if i > 0:
-                noise = torch.randn_like(x)
-                beta_t = self.betas[t].view(-1,1,1,1)
-                x = x + torch.sqrt(beta_t)* noise
-        
-        x = (x.clamp(-1,1) + 1) / 2
-        return x
+
+            t_tensor_current = torch.full((n_samples,), t_current * 1000, device=self.device, dtype=torch.float32)
+            t_tensor_next = torch.full((n_samples,), t_next * 1000, device=self.device, dtype=torch.float32)
+
+            # 1. Medimos la velocidad en la posición actual
+            # Como la red fue entrenada para escupir x_0, la convertimos a velocidad
+            x0_pred_1 = unet(z, t_tensor_current)
+            v1 = (x0_pred_1 - z) / (1.0 - t_current + 1e-5)
+
+            if step == self.timesteps -1:
+                z = z + (v1*dt)
+                break
+
+            z_tmp = z + (v1 * dt)
+            
+            # 3. Lo mismo para el viaje al futuro
+            x0_pred_2 = unet(z_tmp, t_tensor_next)
+            v2 = (x0_pred_2 - z_tmp) / (1.0 - t_next + 1e-5)
+
+            v_mean = (v1 + v2) / 2.0
+            z = z + (v_mean * dt)
+
+        z = (z.clamp(-1,1) + 1) / 2
+        return z
         
 
 if __name__ == "__main__":

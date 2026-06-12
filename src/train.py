@@ -11,7 +11,7 @@ def train():
 
     dataloader = get_dataloader()
 
-    diffusion = DiffusionProcess(timesteps=1000, device=device)
+    diffusion = DiffusionProcess(timesteps=50, device=device)
 
     unet = UNet(in_channels=3,out_channels=3).to(device)
 
@@ -20,19 +20,23 @@ def train():
 
     epochs = 2000
 
-    for epoch in tqdm(range(epochs), desc= "Entrenando modelo...", total= self.timesteps):
+    for epoch in tqdm(range(epochs), desc="Entrenando modelo..."):
         for step, batch in enumerate(dataloader):
 
             x_0 = batch.to(device)
-            actual_batch = x_0.shape[0]
+            u = torch.randn((x_0.shape[0],), device=device)
+            t = torch.sigmoid(u)
 
-            t = torch.randint(0, diffusion.timesteps, (actual_batch,), device=device).long()
+            z_t, true_v = diffusion.add_noise(x_0,t)
 
-            x_t, true_noise = diffusion.add_noise(x_0,t)
+            t_tensor = t * 1000.0
 
-            predicted_noise = unet(x_t,t)
+            predicted_x0 = unet(z_t, t_tensor)
 
-            loss = criterion(predicted_noise,true_noise)
+            t_exp = t.view(-1, 1, 1, 1)
+            predicted_v = (predicted_x0 - z_t) / (1.0 - t_exp + 1e-5)
+
+            loss = criterion(predicted_v, true_v)
 
             optimizer.zero_grad()
             loss.backward()
