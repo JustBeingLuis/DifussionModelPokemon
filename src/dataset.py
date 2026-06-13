@@ -3,6 +3,7 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from config import DATA_RAW_DIR, IMAGE_SIZE, BATCH_SIZE
+import torchvision
 
 class PokemonDataset(Dataset):
     def __init__(self, data_dir=DATA_RAW_DIR):
@@ -21,7 +22,12 @@ class PokemonDataset(Dataset):
 
     def __getitem__(self,idx):
         img_path = self.image_paths[idx]
-        img = Image.open(img_path).convert("RGB")
+        img = Image.open(img_path).convert("RGBA")
+        background = Image.new("RGBA", img.size, (255,255,255))
+        alpha_composite = Image.alpha_composite(background, img)
+        img = alpha_composite.convert("RGB")
+
+        
 
         return self.transform(img)
 
@@ -37,3 +43,11 @@ if __name__ == "__main__":
     print(f"Dimensiones del lote (Batch): {batch.shape}")
     print(f"Valor numérico máximo: {batch.max():.4f}, mínimo: {batch.min():.4f}")
 
+    torchvision.utils.save_image(
+        batch, 
+        "output/test_dataset_alpha.png", 
+        nrow=8, 
+        normalize=True, 
+        value_range=(-1, 1)
+    )
+    print("Imagen de prueba guardada en: output/test_dataset_alpha.png")

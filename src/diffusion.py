@@ -1,8 +1,9 @@
 import torch
 from tqdm import tqdm
+import config
 
 class DiffusionProcess:
-    def __init__(self, timesteps=100, device="cpu"):
+    def __init__(self, timesteps=config.TIMESTEPS, device="cpu"):
         self.timesteps=timesteps
         self.device=device
     
@@ -16,7 +17,7 @@ class DiffusionProcess:
         return z_t, v 
 
     @torch.no_grad()
-    def sample(self, unet, n_samples=1, img_size = 64, channels = 3 ):
+    def sample(self, unet, n_samples=1, img_size = config.IMAGE_SIZE, channels = 3 ):
 
         unet.eval()
         
@@ -33,8 +34,6 @@ class DiffusionProcess:
             t_tensor_current = torch.full((n_samples,), t_current * 1000, device=self.device, dtype=torch.float32)
             t_tensor_next = torch.full((n_samples,), t_next * 1000, device=self.device, dtype=torch.float32)
 
-            # 1. Medimos la velocidad en la posición actual
-            # Como la red fue entrenada para escupir x_0, la convertimos a velocidad
             x0_pred_1 = unet(z, t_tensor_current)
             v1 = (x0_pred_1 - z) / (1.0 - t_current + 1e-5)
 

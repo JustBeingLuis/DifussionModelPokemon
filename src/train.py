@@ -17,7 +17,7 @@ def train(args):
 
     dataloader = get_dataloader(args.batch_size)
 
-    diffusion = DiffusionProcess(timesteps=50, device=device)
+    diffusion = DiffusionProcess(timesteps=config.TIMESTEPS, device=device)
 
     unet = UNet(in_channels=3,out_channels=3).to(device)
 
@@ -99,6 +99,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    # Llamamos a train pasándole el paquete de argumentos
     train(args)
 
