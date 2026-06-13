@@ -21,10 +21,19 @@ Traditional DDPMs predict the noise $\epsilon$ added to the image. This reposito
 
 1. **Target:** Predict the velocity vector field $v_t$ that transports a standard Gaussian distribution $\mathcal{N}(0, \mathbf{I})$ into the empirical data distribution.
 2. **Velocity Field Objective:**
-   $$ v = \frac{x_0 - z_t}{1.0 - t} $$
+
+   $$
+   v = \frac{x_0 - z_t}{1.0 - t}
+   $$
+
    Where $z_t$ is the noisy sample at continuous time $t \in [0, 1]$.
+
 3. **Loss Function:**
-   $$ \mathcal{L}_{MSE} = || \hat{v}_\theta(z_t, t) - v ||^2_2 $$
+
+   $$
+   \mathcal{L}_{MSE} = || \hat{v}_\theta(z_t, t) - v ||^2_2
+   $$
+
 4. **Sampling (Heun's 2nd Order ODE Solver):**
    Instead of the discrete ancestral sampling of DDPMs, generation is performed by solving the ODE $dz = v_\theta(z, t)dt$ backwards from $t=1$ to $t=0$.
 
