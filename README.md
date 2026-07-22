@@ -8,7 +8,7 @@ The implementation focuses on architectural transparency, providing a clean, vec
 
 *The image below showcases samples generated from pure Gaussian noise after 2000 epochs of training.*
 
-![Generated Pokémon Samples](output/pokemones_generados.png)
+![Generated Pokémon Samples](banner.png)
 
 ## Architecture Details
 
